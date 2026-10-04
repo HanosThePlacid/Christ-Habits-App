@@ -1,0 +1,19 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      # Expo packages must move together with the SDK — upgrade those with `npx expo install --fix`.
+      expo:
+        patterns: ['expo', 'expo-*', '@expo/*', 'react-native*', 'react', 'react-dom', 'jest-expo']
+    ignore:
+      - dependency-name: 'expo*'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'react-native'
+        update-types: ['version-update:semver-major', 'version-update:semver-minor']
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

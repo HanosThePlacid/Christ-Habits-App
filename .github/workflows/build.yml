@@ -1,0 +1,50 @@
+name: build
+
+# main  -> installable Android APK (preview profile)
+# v* tag -> production builds (+ store submit when STORE_SUBMIT=true)
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    if: vars.EAS_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - run: make ci-install
+
+      - name: Preview APK
+        if: github.ref_type == 'branch'
+        run: make build-preview
+
+      - name: Production build
+        if: github.ref_type == 'tag'
+        # Android only until store credentials exist; then both platforms + auto-submit.
+        run: |
+          if [ "${{ vars.STORE_SUBMIT }}" = "true" ]; then
+            make build-production PLATFORM=all EAS_FLAGS=--auto-submit
+          else
+            make build-production
+          fi

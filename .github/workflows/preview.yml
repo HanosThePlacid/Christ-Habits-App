@@ -1,0 +1,39 @@
+name: preview
+
+# Publishes an EAS Update per PR and comments a QR code that opens it in Expo Go.
+on:
+  pull_request:
+
+concurrency:
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  update:
+    # Needs repo variable EAS_ENABLED=true + secret EXPO_TOKEN. Fork PRs get no secrets, so skip them.
+    if: vars.EAS_ENABLED == 'true' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - run: make ci-install
+
+      - name: Publish update + comment QR
+        uses: expo/expo-github-action/preview@v8
+        with:
+          command: eas update --auto --branch pr-${{ github.event.pull_request.number }} --non-interactive
+          qr-target: expo-go
