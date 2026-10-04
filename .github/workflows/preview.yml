@@ -25,7 +25,7 @@ jobs:
           node-version: 22
           cache: npm
 
-      - uses: expo/expo-github-action@v8
+      - uses: expo/expo-github-action@v9
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
@@ -33,7 +33,7 @@ jobs:
       - run: make ci-install
 
       - name: Publish update + comment QR
-        uses: expo/expo-github-action/preview@v8
+        uses: expo/expo-github-action/preview@v9
         with:
           command: eas update --auto --branch pr-${{ github.event.pull_request.number }} --non-interactive
           qr-target: expo-go
